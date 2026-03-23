@@ -1,0 +1,28 @@
+{
+  "id": "vibeknow",
+  "name": "VibeKnow Video Generator",
+  "description": "AI-powered knowledge video generation - upload documents or URLs, generate professional videos via IM chat",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "figlensBaseUrl": {
+        "type": "string",
+        "description": "Base URL of the go-figlens video generation service"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for authenticating with go-figlens"
+      },
+      "webhookSecret": {
+        "type": "string",
+        "description": "HMAC secret for verifying webhook callbacks from go-figlens"
+      },
+      "callbackBaseUrl": {
+        "type": "string",
+        "description": "Public base URL for webhook callbacks (e.g. https://your-domain.com/vibeknow/callback). Defaults to http://<gateway>/vibeknow/callback"
+      }
+    },
+    "required": ["figlensBaseUrl", "apiKey"],
+    "additionalProperties": false
+  }
+}
