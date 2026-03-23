@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import type { FiglensClient } from "../api/figlens-client.js";
-import { formatDurationSec } from "../utils/format.js";
-import { textResponse, IMIdentityParams } from "../utils/tool-response.js";
+import { textResult, IMIdentityParams } from "../utils/tool-response.js";
 
 const STAGE_LABELS: Record<string, string> = {
   init: "初始化",
@@ -17,13 +16,14 @@ const STAGE_LABELS: Record<string, string> = {
 export function createStatusTool(client: FiglensClient) {
   return {
     name: "check_video_status",
+    label: "查询视频状态",
     description: "查询视频生成任务的当前进度和状态。",
     parameters: Type.Object({
       task_id: Type.Number({ description: "视频生成任务 ID" }),
       ...IMIdentityParams,
     }),
     async execute(
-      _id: string,
+      _toolCallId: string,
       params: { task_id: number; im_handle: string; im_channel: string },
     ) {
       const result = await client.getStatus(
@@ -36,21 +36,21 @@ export function createStatusTool(client: FiglensClient) {
       if (result.status === "completed") {
         let text = `任务 ${result.task_id} 已完成！\n当前阶段: ${stageLabel}`;
         if (result.duration) {
-          text += `\n视频时长: ${formatDurationSec(result.duration)}`;
+          text += `\n视频时长: ${Math.round(result.duration / 1000)}秒`;
         }
-        if (result.html_url) {
-          text += `\n预览链接: ${result.html_url}`;
+        if (result.share_url) {
+          text += `\n观看链接: ${result.share_url}`;
         }
-        return textResponse(text);
+        return textResult(text);
       }
 
       if (result.status === "failed") {
-        return textResponse(
+        return textResult(
           `任务 ${result.task_id} 生成失败: ${result.error ?? "未知错误"}`,
         );
       }
 
-      return textResponse(
+      return textResult(
         `任务 ${result.task_id} 正在生成中...\n当前阶段: ${stageLabel}`,
       );
     },

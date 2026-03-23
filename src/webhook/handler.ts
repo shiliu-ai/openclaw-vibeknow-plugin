@@ -5,8 +5,7 @@ export interface WebhookPayload {
   task_id: number;
   session_id: string;
   status: "completed" | "failed";
-  video_url?: string;
-  html_url?: string;
+  share_url?: string;
   cover_url?: string;
   duration?: number;
   error?: string;
@@ -18,7 +17,7 @@ export interface WebhookHandlerDeps {
   webhookSecret: string;
   onCompleted: (payload: WebhookPayload) => Promise<void>;
   onFailed: (payload: WebhookPayload) => Promise<void>;
-  logger: { info: (...args: unknown[]) => void; error: (...args: unknown[]) => void };
+  logger: { info: (message: string) => void; error: (message: string) => void };
 }
 
 export function createWebhookHandler(deps: WebhookHandlerDeps) {
@@ -45,12 +44,15 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
     }
     const body = Buffer.concat(chunks);
 
-    const signature = (req.headers["x-webhook-signature"] as string) ?? "";
-    if (deps.webhookSecret && !verifySignature(body, signature, deps.webhookSecret)) {
-      deps.logger.error("[VibeKnow Webhook] signature verification failed");
-      res.statusCode = 401;
-      res.end("Unauthorized");
-      return;
+    // Verify signature only when webhookSecret is configured
+    if (deps.webhookSecret) {
+      const signature = (req.headers["x-webhook-signature"] as string) ?? "";
+      if (!verifySignature(body, signature, deps.webhookSecret)) {
+        deps.logger.error("[VibeKnow Webhook] signature verification failed");
+        res.statusCode = 401;
+        res.end("Unauthorized");
+        return;
+      }
     }
 
     let payload: WebhookPayload;
@@ -77,7 +79,9 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
         );
       }
     } catch (err) {
-      deps.logger.error("[VibeKnow Webhook] handler error:", err);
+      deps.logger.error(
+        `[VibeKnow Webhook] handler error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });

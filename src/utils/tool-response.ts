@@ -1,7 +1,8 @@
 import { Type } from "@sinclair/typebox";
 
-export function textResponse(text: string) {
-  return { content: [{ type: "text" as const, text }] };
+/** Build an AgentToolResult with a single text content block. */
+export function textResult(text: string) {
+  return { content: [{ type: "text" as const, text }], details: undefined };
 }
 
 export const IMIdentityParams = {

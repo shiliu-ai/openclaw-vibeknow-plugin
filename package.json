@@ -12,6 +12,9 @@
     "dev": "tsc --watch"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
   "keywords": ["openclaw", "plugin", "vibeknow", "video", "knowledge"],
   "dependencies": {

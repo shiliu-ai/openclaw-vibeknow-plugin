@@ -24,8 +24,7 @@ export interface StatusResult {
   task_id: number;
   status: string;
   stage: string;
-  video_url?: string;
-  html_url?: string;
+  share_url?: string;
   cover_url?: string;
   duration?: number;
   error?: string;
@@ -45,8 +44,7 @@ export interface WorkItem {
 }
 
 export interface WorkURLResult {
-  html_url?: string;
-  video_url?: string;
+  share_url?: string;
 }
 
 interface ApiResponse<T> {
@@ -54,8 +52,6 @@ interface ApiResponse<T> {
   data: T;
   msg?: string;
 }
-
-const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class FiglensClient {
   private baseUrl: string;
@@ -79,13 +75,12 @@ export class FiglensClient {
 
   async uploadFile(file: Buffer, filename: string): Promise<UploadResult> {
     const formData = new FormData();
-    formData.append("file", new Blob([file.buffer as ArrayBuffer]), filename);
+    formData.append("file", new Blob([new Uint8Array(file)]), filename);
 
     const resp = await fetch(`${this.baseUrl}/v1/openclaw/upload`, {
       method: "POST",
       headers: { "X-API-Key": this.apiKey },
       body: formData,
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     });
 
     return this.handleResponse<UploadResult>(resp);
@@ -114,7 +109,6 @@ export class FiglensClient {
         "X-API-Key": this.apiKey,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     });
     return this.handleResponse<T>(resp);
   }
@@ -126,7 +120,6 @@ export class FiglensClient {
         "X-API-Key": this.apiKey,
         ...extraHeaders,
       },
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     });
     return this.handleResponse<T>(resp);
   }
@@ -134,8 +127,7 @@ export class FiglensClient {
   private async handleResponse<T>(resp: Response): Promise<T> {
     if (!resp.ok) {
       const text = await resp.text();
-      const truncated = text.length > 200 ? text.slice(0, 200) + "..." : text;
-      throw new Error(`Figlens API error ${resp.status}: ${truncated}`);
+      throw new Error(`Figlens API error ${resp.status}: ${text}`);
     }
     const json = (await resp.json()) as ApiResponse<T>;
     if (json.code !== 200) {

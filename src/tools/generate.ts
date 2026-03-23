@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import type { FiglensClient } from "../api/figlens-client.js";
-import { textResponse, IMIdentityParams } from "../utils/tool-response.js";
+import { textResult, IMIdentityParams } from "../utils/tool-response.js";
 
 export interface GenerateContext {
   client: FiglensClient;
@@ -10,6 +10,7 @@ export interface GenerateContext {
 export function createGenerateTool(ctx: GenerateContext) {
   return {
     name: "generate_video",
+    label: "生成视频",
     description:
       "根据知识库资料生成一段知识短视频。需要先用 upload_knowledge 上传资料获取 knowledge_id。" +
       "视频生成需要 5-10 分钟，任务提交后会立即返回，完成后自动通知用户。",
@@ -26,7 +27,7 @@ export function createGenerateTool(ctx: GenerateContext) {
       ),
     }),
     async execute(
-      _id: string,
+      _toolCallId: string,
       params: {
         knowledge_id: string;
         query: string;
@@ -44,7 +45,7 @@ export function createGenerateTool(ctx: GenerateContext) {
         voice_id: params.voice_id,
       });
 
-      return textResponse(
+      return textResult(
         `视频生成任务已启动（任务 ID: ${result.task_id}）。\n` +
           `预计需要 5-10 分钟，完成后会主动通知你。\n` +
           `你可以继续和我聊天，不需要等待。`,

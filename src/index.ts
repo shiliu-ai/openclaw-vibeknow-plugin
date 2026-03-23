@@ -1,6 +1,9 @@
-import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store";
-import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
+import type {
+  OpenClawPluginApi,
+  PluginRuntime,
+  PluginLogger,
+} from "openclaw/plugin-sdk";
+import { createPluginRuntimeStore } from "openclaw/plugin-sdk";
 
 import { FiglensClient } from "./api/figlens-client.js";
 import { createUploadTool } from "./tools/upload.js";
@@ -18,20 +21,22 @@ const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
   "vibeknow plugin runtime not initialized",
 );
 
-export default definePluginEntry({
+export default {
   id: "vibeknow",
   name: "VibeKnow Video Generator",
   description: "AI-powered knowledge video generation via IM chat",
 
-  register(api) {
-    const config = api.pluginConfig as {
-      figlensBaseUrl?: string;
-      apiKey?: string;
-      webhookSecret?: string;
-      callbackBaseUrl?: string;
-    };
+  register(api: OpenClawPluginApi) {
+    const config = api.pluginConfig as
+      | {
+          figlensBaseUrl?: string;
+          apiKey?: string;
+          webhookSecret?: string;
+          callbackBaseUrl?: string;
+        }
+      | undefined;
 
-    if (!config.figlensBaseUrl || !config.apiKey) {
+    if (!config?.figlensBaseUrl || !config?.apiKey) {
       api.logger.warn(
         "[VibeKnow] Plugin not configured. Set figlensBaseUrl and apiKey in plugin config.",
       );
@@ -49,11 +54,11 @@ export default definePluginEntry({
       apiKey: config.apiKey,
     });
 
-    const gatewayPort = api.config.gateway?.port ?? 3000;
-    const gatewayHost = api.config.gateway?.host ?? "127.0.0.1";
     const callbackUrl =
-      config.callbackBaseUrl ??
-      `http://${gatewayHost}:${gatewayPort}${WEBHOOK_PATH}`;
+      config.callbackBaseUrl ?? `http://127.0.0.1:3000${WEBHOOK_PATH}`;
+
+    // Store runtime for outbound delivery in webhook handler
+    runtimeStore.setRuntime(api.runtime);
 
     // ── 注册工具 ──
 
@@ -69,6 +74,7 @@ export default definePluginEntry({
 
     api.registerHttpRoute({
       path: WEBHOOK_PATH,
+      auth: "plugin",
       handler: createWebhookHandler({
         webhookSecret: config.webhookSecret ?? "",
         logger: api.logger,
@@ -78,11 +84,8 @@ export default definePluginEntry({
           if (payload.duration) {
             lines.push(`视频时长: ${formatDurationSec(payload.duration)}`);
           }
-          if (payload.html_url) {
-            lines.push(`预览链接: ${payload.html_url}`);
-          }
-          if (payload.video_url) {
-            lines.push(`视频链接: ${payload.video_url}`);
+          if (payload.share_url) {
+            lines.push(`观看链接: ${payload.share_url}`);
           }
           lines.push("", "如需导出高清 MP4 或修改视频，请告诉我。");
 
@@ -104,13 +107,11 @@ export default definePluginEntry({
       `[VibeKnow] Plugin registered. Figlens: ${config.figlensBaseUrl}, Callback: ${callbackUrl}`,
     );
   },
-
-  setRuntime: runtimeStore.setRuntime,
-});
+};
 
 function createDeliverMessage(
   store: typeof runtimeStore,
-  logger: { error: (...a: unknown[]) => void },
+  logger: PluginLogger,
 ) {
   return async (payload: WebhookPayload, text: string) => {
     const runtime = store.tryGetRuntime();
@@ -120,20 +121,23 @@ function createDeliverMessage(
     }
 
     if (!payload.im_channel || !payload.im_handle) {
-      logger.error("[VibeKnow] missing im_channel/im_handle in webhook payload");
+      logger.error(
+        "[VibeKnow] missing im_channel/im_handle in webhook payload",
+      );
       return;
     }
 
+    // Use subagent to deliver the message through the appropriate IM channel
     try {
-      const cfg = await runtime.config.loadConfig();
-      await runtime.outbound.deliverOutboundPayloads({
-        cfg,
-        channel: payload.im_channel,
-        to: payload.im_handle,
-        payloads: [{ text }],
+      await runtime.subagent.run({
+        sessionKey: `vibeknow:${payload.im_channel}:${payload.im_handle}`,
+        message: text,
+        deliver: true,
       });
     } catch (err) {
-      logger.error("[VibeKnow] outbound delivery failed:", err);
+      logger.error(
+        `[VibeKnow] outbound delivery failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   };
 }
