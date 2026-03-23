@@ -7,9 +7,9 @@ export function createUploadTool(client: FiglensClient) {
     name: "upload_knowledge",
     label: "上传知识库",
     description:
-      "上传文件或网页 URL 到知识库，返回 knowledge_id。" +
+      "将文档或网页 URL 导入知识库并返回 knowledge_id。" +
       "支持 PDF、Word、PPT、TXT 等文档格式，也支持网页 URL 自动爬取。" +
-      "生成视频前必须先调用此工具获取 knowledge_id。",
+      "knowledge_id 是调用 generate_video 生成视频的前置条件。",
     parameters: Type.Object({
       url: Type.Optional(
         Type.String({

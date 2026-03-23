@@ -15,7 +15,7 @@ export function createListTool(client: FiglensClient) {
   return {
     name: "list_videos",
     label: "列出视频",
-    description: "列出用户的所有视频作品。",
+    description: "列出当前用户已生成的所有视频作品，包含状态和时长信息。",
     parameters: Type.Object({
       ...IMIdentityParams,
     }),

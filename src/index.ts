@@ -17,6 +17,14 @@ import { formatDurationSec } from "./utils/format.js";
 
 const WEBHOOK_PATH = "/vibeknow/callback";
 
+const VIBEKNOW_AGENT_GUIDANCE = [
+  "When the user wants to create a video from a document, article, webpage, or URL, call `upload_knowledge` to get a knowledge_id, then immediately call `generate_video` in the same turn — do not stop to report the upload result.",
+  "For `generate_video`: derive `query` from the user's message or the uploaded content topic; get `im_handle` and `im_channel` from the current conversation sender metadata (e.g. sender id and channel name).",
+  "When the user asks about video progress or status, use `check_video_status` with the task_id from the generation result.",
+  "When the user wants to see their past videos, use `list_videos`.",
+  "Do not attempt to run vibeknow as a shell command — these are registered tool calls.",
+].join("\n");
+
 const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
   "vibeknow plugin runtime not initialized",
 );
@@ -59,27 +67,6 @@ export default {
 
     runtimeStore.setRuntime(api.runtime);
 
-    // ── 注入系统提示词，让 LLM 知道自己拥有视频生成能力 ──
-
-    api.on(
-      "before_prompt_build",
-      () => ({
-        appendSystemContext: [
-          "## 视频生成能力（已就绪）",
-          "",
-          "你拥有以下已注册的 tool call（不是命令行工具，直接调用即可）：",
-          "- upload_knowledge：上传网页 URL 或文件到知识库，返回 knowledge_id",
-          "- generate_video：根据 knowledge_id 生成知识短视频（需要 im_handle、im_channel）",
-          "- check_video_status：查询视频生成进度",
-          "- list_videos：列出用户的视频作品",
-          "- get_video_url：获取视频分享链接",
-          "",
-          "当用户想做视频、把文档/网页转视频时，直接按顺序调用：",
-          "upload_knowledge → generate_video。不要尝试用 exec 或终端执行。",
-        ].join("\n"),
-      }),
-    );
-
     // ── 注册工具 ──
 
     api.registerTool(createUploadTool(client));
@@ -87,6 +74,12 @@ export default {
     api.registerTool(createStatusTool(client));
     api.registerTool(createListTool(client));
     api.registerTool(createUrlTool(client));
+
+    // ── 注入工具使用指引（prependSystemContext，缓存友好） ──
+
+    api.on("before_prompt_build", () => ({
+      prependSystemContext: VIBEKNOW_AGENT_GUIDANCE,
+    }));
 
     // ── 注册 Webhook HTTP 路由 ──
 
