@@ -1,5 +1,5 @@
 {
-  "name": "@vibeknow/openclaw-vibeknow-plugin",
+  "name": "vibeknow",
   "version": "0.1.0",
   "description": "OpenClaw plugin for VibeKnow - AI-powered knowledge video generation via IM",
   "type": "module",
