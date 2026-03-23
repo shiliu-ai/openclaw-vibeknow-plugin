@@ -51,9 +51,6 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
     // Verify signature only when webhookSecret is configured
     if (deps.webhookSecret) {
       const signature = (req.headers["x-webhook-signature"] as string) ?? "";
-      deps.logger.info(
-        `[VibeKnow Webhook] signature debug: received="${signature}", body_len=${body.length}, secret_len=${deps.webhookSecret.length}`,
-      );
       if (!verifySignature(body, signature, deps.webhookSecret)) {
         deps.logger.error("[VibeKnow Webhook] signature verification failed");
         res.statusCode = 401;
@@ -75,6 +72,10 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
       `[VibeKnow Webhook] received: task_id=${payload.task_id}, status=${payload.status}`,
     );
 
+    // ACK immediately, then deliver asynchronously
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true }));
+
     try {
       if (payload.status === "completed") {
         await deps.onCompleted(payload);
@@ -95,8 +96,6 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
       );
     }
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true }));
     return true;
   };
 }

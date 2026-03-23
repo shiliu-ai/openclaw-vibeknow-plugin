@@ -19,7 +19,7 @@
       },
       "callbackBaseUrl": {
         "type": "string",
-        "description": "Public base URL for webhook callbacks (e.g. https://your-domain.com/vibeknow/callback). Defaults to http://<gateway>/vibeknow/callback"
+        "description": "Public base URL for webhook callbacks (e.g. https://your-domain.com). Defaults to http://127.0.0.1:3000"
       }
     },
     "required": ["figlensBaseUrl", "apiKey"],

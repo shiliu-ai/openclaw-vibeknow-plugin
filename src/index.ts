@@ -57,7 +57,6 @@ export default {
     const rawBase = config.callbackBaseUrl ?? "http://127.0.0.1:3000";
     const callbackUrl = rawBase.replace(/\/+$/, "") + WEBHOOK_PATH;
 
-    // Store runtime for outbound delivery in webhook handler
     runtimeStore.setRuntime(api.runtime);
 
     // ── 注入系统提示词，让 LLM 知道自己拥有视频生成能力 ──
@@ -66,19 +65,17 @@ export default {
       "before_prompt_build",
       () => ({
         appendSystemContext: [
-          "## VibeKnow 视频生成插件（已安装）",
+          "## 视频生成能力（已就绪）",
           "",
-          "你已安装 VibeKnow 插件，具备将文档、网页内容转化为知识短视频的能力。",
-          "当用户提到以下意图时，应主动使用 VibeKnow 工具：",
-          "- 想要制作/生成/创建视频",
-          "- 把文档/文章/网页/PPT/PDF 转成视频",
-          "- 做知识视频、短视频、讲解视频",
-          "- 查看已生成的视频、视频进度",
+          "你拥有以下已注册的 tool call（不是命令行工具，直接调用即可）：",
+          "- upload_knowledge：上传网页 URL 或文件到知识库，返回 knowledge_id",
+          "- generate_video：根据 knowledge_id 生成知识短视频（需要 im_handle、im_channel）",
+          "- check_video_status：查询视频生成进度",
+          "- list_videos：列出用户的视频作品",
+          "- get_video_url：获取视频分享链接",
           "",
-          "工作流程：",
-          "1. 先用 upload_knowledge 上传资料（URL 或文件）获取 knowledge_id",
-          "2. 再用 generate_video 提交视频生成任务",
-          "3. 可用 check_video_status 查询进度，list_videos 查看历史作品",
+          "当用户想做视频、把文档/网页转视频时，直接按顺序调用：",
+          "upload_knowledge → generate_video。不要尝试用 exec 或终端执行。",
         ].join("\n"),
       }),
     );
@@ -147,6 +144,10 @@ export default {
   },
 };
 
+/**
+ * 通过 runtime.channel 的平台原生 send 函数直接推送消息。
+ * 这些函数是纯 API 调用，不依赖 gateway 请求上下文。
+ */
 function createDeliverMessage(
   store: typeof runtimeStore,
   logger: PluginLogger,
@@ -165,13 +166,42 @@ function createDeliverMessage(
       return;
     }
 
-    // Use subagent to deliver the message through the appropriate IM channel
+    const cfg = runtime.config.loadConfig();
+    const to = payload.im_handle;
+    const channel = payload.im_channel;
+
     try {
-      await runtime.subagent.run({
-        sessionKey: `vibeknow:${payload.im_channel}:${payload.im_handle}`,
-        message: text,
-        deliver: true,
-      });
+      switch (channel) {
+        case "telegram":
+          await runtime.channel.telegram.sendMessageTelegram(to, text, { cfg });
+          break;
+        case "whatsapp":
+          await runtime.channel.whatsapp.sendMessageWhatsApp(to, text, { verbose: false, cfg });
+          break;
+        case "discord":
+          await runtime.channel.discord.sendMessageDiscord(to, text, { cfg });
+          break;
+        case "slack":
+          await runtime.channel.slack.sendMessageSlack(to, text, { cfg });
+          break;
+        case "signal":
+          await runtime.channel.signal.sendMessageSignal(to, text, { cfg });
+          break;
+        case "imessage":
+          await runtime.channel.imessage.sendMessageIMessage(to, text, { config: cfg });
+          break;
+        case "line":
+          await runtime.channel.line.pushMessageLine(to, text, { cfg });
+          break;
+        default:
+          logger.error(
+            `[VibeKnow] unsupported im_channel: ${channel}`,
+          );
+          return;
+      }
+      logger.info(
+        `[VibeKnow] message delivered: channel=${channel}, to=${to}, task_id=${payload.task_id}`,
+      );
     } catch (err) {
       logger.error(
         `[VibeKnow] outbound delivery failed: ${err instanceof Error ? err.message : String(err)}`,
