@@ -30,7 +30,7 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
       res.statusCode = 405;
       res.setHeader("Allow", "POST");
       res.end("Method Not Allowed");
-      return;
+      return true;
     }
 
     const MAX_BODY = 1024 * 1024; // 1 MB
@@ -42,7 +42,7 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
       if (totalLength > MAX_BODY) {
         res.statusCode = 413;
         res.end("Payload Too Large");
-        return;
+        return true;
       }
       chunks.push(buf);
     }
@@ -58,7 +58,7 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
         deps.logger.error("[VibeKnow Webhook] signature verification failed");
         res.statusCode = 401;
         res.end("Unauthorized");
-        return;
+        return true;
       }
     }
 
@@ -68,7 +68,7 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
     } catch {
       res.statusCode = 400;
       res.end("Invalid JSON");
-      return;
+      return true;
     }
 
     deps.logger.info(
@@ -97,5 +97,6 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true }));
+    return true;
   };
 }
