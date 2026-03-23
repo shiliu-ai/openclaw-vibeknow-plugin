@@ -74,7 +74,7 @@ export default {
 
     api.registerHttpRoute({
       path: WEBHOOK_PATH,
-      auth: "gateway",
+      auth: "plugin",
       handler: createWebhookHandler({
         webhookSecret: config.webhookSecret ?? "",
         logger: api.logger,
