@@ -19,7 +19,7 @@ Users send files or URLs in IM, and AI automatically generates knowledge short v
 ## Installation
 
 ```bash
-openclaw plugins install @vibeknow/openclaw-vibeknow-plugin
+npm install github:shiliu-ai/openclaw-vibeknow-plugin
 ```
 
 ## Configuration
