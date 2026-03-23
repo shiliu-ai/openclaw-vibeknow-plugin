@@ -12,7 +12,7 @@ export function createGenerateTool(ctx: GenerateContext) {
     name: "generate_video",
     description:
       "根据知识库资料生成一段知识短视频。需要先用 upload_knowledge 上传资料获取 knowledge_id。" +
-      "视频生成需要 3-5 分钟，任务提交后会立即返回，完成后自动通知用户。",
+      "视频生成需要 5-10 分钟，任务提交后会立即返回，完成后自动通知用户。",
     parameters: Type.Object({
       knowledge_id: Type.String({
         description: "知识库 ID，通过 upload_knowledge 工具获取",
@@ -46,7 +46,7 @@ export function createGenerateTool(ctx: GenerateContext) {
 
       return textResponse(
         `视频生成任务已启动（任务 ID: ${result.task_id}）。\n` +
-          `预计需要 3-5 分钟，完成后会主动通知你。\n` +
+          `预计需要 5-10 分钟，完成后会主动通知你。\n` +
           `你可以继续和我聊天，不需要等待。`,
       );
     },
