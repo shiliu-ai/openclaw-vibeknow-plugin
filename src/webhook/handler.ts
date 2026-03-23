@@ -51,6 +51,9 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
     // Verify signature only when webhookSecret is configured
     if (deps.webhookSecret) {
       const signature = (req.headers["x-webhook-signature"] as string) ?? "";
+      deps.logger.info(
+        `[VibeKnow Webhook] signature debug: received="${signature}", body_len=${body.length}, secret_len=${deps.webhookSecret.length}`,
+      );
       if (!verifySignature(body, signature, deps.webhookSecret)) {
         deps.logger.error("[VibeKnow Webhook] signature verification failed");
         res.statusCode = 401;
