@@ -7,9 +7,10 @@ import { createPluginRuntimeStore } from "openclaw/plugin-sdk";
 
 import { FiglensClient } from "./api/client.js";
 import { createUploadTool } from "./tools/upload.js";
-import { createGenerateTool } from "./tools/generate.js";
-import { createStatusTool } from "./tools/status.js";
-import { createListTool } from "./tools/list.js";
+import { createCreateVideoToolFactory } from "./tools/create-video.js";
+import { createGenerateToolFactory } from "./tools/generate.js";
+import { createStatusToolFactory } from "./tools/status.js";
+import { createListToolFactory } from "./tools/list.js";
 import { createUrlTool } from "./tools/url.js";
 import { createWebhookHandler } from "./webhook/handler.js";
 import type { WebhookPayload } from "./webhook/handler.js";
@@ -17,13 +18,16 @@ import { formatDurationSec } from "./utils/format.js";
 
 const WEBHOOK_PATH = "/vibeknow/callback";
 
-const VIBEKNOW_AGENT_GUIDANCE = [
-  "When the user wants to create a video from a document, article, webpage, or URL, call `upload_knowledge` to get a knowledge_id, then immediately call `generate_video` in the same turn — do not stop to report the upload result.",
-  "For `generate_video`: derive `query` from the user's message or the uploaded content topic; get `im_handle` and `im_channel` from the current conversation sender metadata (e.g. sender id and channel name).",
-  "When the user asks about video progress or status, use `check_video_status` with the task_id from the generation result.",
-  "When the user wants to see their past videos, use `list_videos`.",
-  "Do not attempt to run vibeknow as a shell command — these are registered tool calls.",
-].join("\n");
+const VIBEKNOW_AGENT_GUIDANCE = `You have a VibeKnow video plugin. Follow this decision tree:
+
+INTENT → TOOL (one call, no extra thinking):
+• User gives a URL/link and wants a video → call \`create_video_from_url\` with that URL. Done.
+• User gives a document/file and wants a video → call \`upload_knowledge\`, then \`generate_video\`.
+• User asks about video progress → call \`check_video_status\` with the task_id.
+• User wants to see past videos → call \`list_videos\`.
+• User wants a video link → call \`get_video_url\`.
+
+IMPORTANT: Act immediately — do NOT ask clarifying questions if you have a URL. Just call the tool.`;
 
 const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
   "vibeknow plugin runtime not initialized",
@@ -67,12 +71,13 @@ export default {
 
     runtimeStore.setRuntime(api.runtime);
 
-    // ── 注册工具 ──
+    // ── 注册工具（factory 模式自动注入 im_handle/im_channel） ──
 
+    api.registerTool(createCreateVideoToolFactory({ client, callbackUrl }));
+    api.registerTool(createGenerateToolFactory({ client, callbackUrl }));
+    api.registerTool(createStatusToolFactory(client));
+    api.registerTool(createListToolFactory(client));
     api.registerTool(createUploadTool(client));
-    api.registerTool(createGenerateTool({ client, callbackUrl }));
-    api.registerTool(createStatusTool(client));
-    api.registerTool(createListTool(client));
     api.registerTool(createUrlTool(client));
 
     // ── 注入工具使用指引（prependSystemContext，缓存友好） ──
