@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { FiglensClient } from "../api/figlens-client.js";
+import type { FiglensClient } from "../api/client.js";
 import { formatDurationSec } from "../utils/format.js";
 import { textResult, IMIdentityParams } from "../utils/tool-response.js";
 

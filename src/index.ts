@@ -5,7 +5,7 @@ import type {
 } from "openclaw/plugin-sdk";
 import { createPluginRuntimeStore } from "openclaw/plugin-sdk";
 
-import { FiglensClient } from "./api/figlens-client.js";
+import { FiglensClient } from "./api/client.js";
 import { createUploadTool } from "./tools/upload.js";
 import { createGenerateTool } from "./tools/generate.js";
 import { createStatusTool } from "./tools/status.js";
@@ -54,11 +54,34 @@ export default {
       apiKey: config.apiKey,
     });
 
-    const callbackUrl =
-      config.callbackBaseUrl ?? `http://127.0.0.1:3000${WEBHOOK_PATH}`;
+    const rawBase = config.callbackBaseUrl ?? "http://127.0.0.1:3000";
+    const callbackUrl = rawBase.replace(/\/+$/, "") + WEBHOOK_PATH;
 
     // Store runtime for outbound delivery in webhook handler
     runtimeStore.setRuntime(api.runtime);
+
+    // ── 注入系统提示词，让 LLM 知道自己拥有视频生成能力 ──
+
+    api.on(
+      "before_prompt_build",
+      () => ({
+        appendSystemContext: [
+          "## VibeKnow 视频生成插件（已安装）",
+          "",
+          "你已安装 VibeKnow 插件，具备将文档、网页内容转化为知识短视频的能力。",
+          "当用户提到以下意图时，应主动使用 VibeKnow 工具：",
+          "- 想要制作/生成/创建视频",
+          "- 把文档/文章/网页/PPT/PDF 转成视频",
+          "- 做知识视频、短视频、讲解视频",
+          "- 查看已生成的视频、视频进度",
+          "",
+          "工作流程：",
+          "1. 先用 upload_knowledge 上传资料（URL 或文件）获取 knowledge_id",
+          "2. 再用 generate_video 提交视频生成任务",
+          "3. 可用 check_video_status 查询进度，list_videos 查看历史作品",
+        ].join("\n"),
+      }),
+    );
 
     // ── 注册工具 ──
 

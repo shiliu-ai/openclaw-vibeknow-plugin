@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { FiglensClient } from "../api/figlens-client.js";
+import type { FiglensClient } from "../api/client.js";
 import { textResult } from "../utils/tool-response.js";
 
 export function createUrlTool(client: FiglensClient) {
