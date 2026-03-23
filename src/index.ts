@@ -80,9 +80,12 @@ export default {
         logger: api.logger,
 
         async onCompleted(payload: WebhookPayload) {
-          const lines = ["你的知识视频已生成完成！"];
+          const lines = ["🎉 你的知识视频已生成完成！"];
           if (payload.duration) {
             lines.push(`视频时长: ${formatDurationSec(payload.duration)}`);
+          }
+          if (payload.cover_url) {
+            lines.push(`封面预览: ${payload.cover_url}`);
           }
           if (payload.share_url) {
             lines.push(`观看链接: ${payload.share_url}`);
@@ -99,6 +102,18 @@ export default {
             `你可以检查资料后重新提交，或者告诉我具体的报错信息。`;
 
           await deliverMessage(payload, text);
+        },
+
+        async onQueryOptimized(payload: WebhookPayload) {
+          if (!payload.optimized_query) return;
+          const text =
+            `已为你优化视频提示词：\n\n${payload.optimized_query}\n\n正在开始生成视频，预计 3-5 分钟...`;
+          await deliverMessage(payload, text);
+        },
+
+        async onProcessing(payload: WebhookPayload) {
+          if (!payload.message) return;
+          await deliverMessage(payload, payload.message);
         },
       }),
     });

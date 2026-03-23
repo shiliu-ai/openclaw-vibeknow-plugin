@@ -4,11 +4,13 @@ import { verifySignature } from "../utils/hmac.js";
 export interface WebhookPayload {
   task_id: number;
   session_id: string;
-  status: "completed" | "failed";
+  status: "completed" | "failed" | "query_optimized" | "processing";
   share_url?: string;
   cover_url?: string;
   duration?: number;
   error?: string;
+  optimized_query?: string;
+  message?: string;
   im_handle?: string;
   im_channel?: string;
 }
@@ -17,6 +19,8 @@ export interface WebhookHandlerDeps {
   webhookSecret: string;
   onCompleted: (payload: WebhookPayload) => Promise<void>;
   onFailed: (payload: WebhookPayload) => Promise<void>;
+  onQueryOptimized?: (payload: WebhookPayload) => Promise<void>;
+  onProcessing?: (payload: WebhookPayload) => Promise<void>;
   logger: { info: (message: string) => void; error: (message: string) => void };
 }
 
@@ -73,6 +77,10 @@ export function createWebhookHandler(deps: WebhookHandlerDeps) {
         await deps.onCompleted(payload);
       } else if (payload.status === "failed") {
         await deps.onFailed(payload);
+      } else if (payload.status === "query_optimized" && deps.onQueryOptimized) {
+        await deps.onQueryOptimized(payload);
+      } else if (payload.status === "processing" && deps.onProcessing) {
+        await deps.onProcessing(payload);
       } else {
         deps.logger.info(
           `[VibeKnow Webhook] ignoring unhandled status: ${payload.status}`,
