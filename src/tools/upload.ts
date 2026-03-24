@@ -7,9 +7,8 @@ export function createUploadTool(client: FiglensClient) {
     name: "upload_knowledge",
     label: "上传知识库",
     description:
-      "上传文档或网页到知识库，返回 knowledge_id。" +
-      "注意：如果用户只给了 URL 想生成视频，优先用 create_video_from_url 一步完成。" +
-      "此工具仅在需要单独上传文档时使用。",
+      "【VibeKnow】上传文档或网页到知识库，返回 knowledge_id。" +
+      "仅在需要单独上传文档时使用。用户给 URL 想直接生成视频时请改用 create_video_from_url。",
     parameters: Type.Object({
       url: Type.Optional(
         Type.String({

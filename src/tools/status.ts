@@ -21,7 +21,7 @@ export function createStatusToolFactory(client: FiglensClient) {
     return {
       name: "check_video_status",
       label: "查询视频状态",
-      description: "根据 task_id 查询视频生成任务的当前阶段和进度。",
+      description: "【VibeKnow】根据 task_id 查询视频生成任务的当前阶段和进度。",
       parameters: Type.Object({
         task_id: Type.Number({ description: "视频生成任务 ID" }),
       }),

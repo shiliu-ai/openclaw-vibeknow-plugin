@@ -19,7 +19,7 @@ export function createListToolFactory(client: FiglensClient) {
     return {
       name: "list_videos",
       label: "列出视频",
-      description: "列出当前用户已生成的所有视频作品，包含状态和时长信息。",
+      description: "【VibeKnow】列出当前用户已生成的所有视频作品，包含状态和时长信息。",
       parameters: Type.Object({}),
       async execute(
         _toolCallId: string,

@@ -16,9 +16,9 @@ export function createGenerateToolFactory(ctx: GenerateContext) {
       name: "generate_video",
       label: "生成视频",
       description:
-        "根据已有的 knowledge_id 生成视频。" +
-        "注意：用户给了 URL 想直接生成视频时，优先用 create_video_from_url。" +
-        "此工具仅在已有 knowledge_id 时使用。",
+        "【VibeKnow】根据已有的 knowledge_id 生成视频。" +
+        "仅在已通过 upload_knowledge 获得 knowledge_id 时使用。" +
+        "用户直接给 URL 时请改用 create_video_from_url。",
       parameters: Type.Object({
         knowledge_id: Type.String({
           description: "知识库 ID，通过 upload_knowledge 工具获取",

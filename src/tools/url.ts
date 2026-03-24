@@ -6,7 +6,7 @@ export function createUrlTool(client: FiglensClient) {
   return {
     name: "get_video_url",
     label: "获取视频链接",
-    description: "根据 work_id 获取视频作品的分享观看链接。",
+    description: "【VibeKnow】根据 work_id 获取视频作品的分享观看链接。",
     parameters: Type.Object({
       work_id: Type.Number({ description: "作品 ID" }),
     }),

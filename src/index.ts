@@ -18,16 +18,18 @@ import { formatDurationSec } from "./utils/format.js";
 
 const WEBHOOK_PATH = "/vibeknow/callback";
 
-const VIBEKNOW_AGENT_GUIDANCE = `You have a VibeKnow video plugin. Follow this decision tree:
+const VIBEKNOW_AGENT_GUIDANCE = `## VibeKnow Video Tools — ALREADY REGISTERED
 
-INTENT → TOOL (one call, no extra thinking):
-• User gives a URL/link and wants a video → call \`create_video_from_url\` with that URL. Done.
-• User gives a document/file and wants a video → call \`upload_knowledge\`, then \`generate_video\`.
-• User asks about video progress → call \`check_video_status\` with the task_id.
-• User wants to see past videos → call \`list_videos\`.
-• User wants a video link → call \`get_video_url\`.
+"vibeknow" / "VibeKnow" / "视频生成" in user messages means: use the tools below. Do NOT call sessions_spawn, do NOT try to run vibeknow as a command or runtime.
 
-IMPORTANT: Act immediately — do NOT ask clarifying questions if you have a URL. Just call the tool.`;
+ROUTING (act on the FIRST match, one tool call, no clarifying questions):
+1. User gives a URL + wants a video (mentions vibeknow/视频/video) → \`create_video_from_url(url)\`. Done.
+2. User uploaded a file/document + wants a video → \`upload_knowledge\` then \`generate_video\`.
+3. "进度" / "status" / "怎么样了" → \`check_video_status(task_id)\`.
+4. "我的视频" / "list" / "列表" → \`list_videos\`.
+5. "链接" / "share" for a finished video → \`get_video_url(work_id)\`.
+
+NEVER ask "do you want me to use vibeknow?" — if the user mentioned vibeknow or video generation, just call the tool.`;
 
 const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
   "vibeknow plugin runtime not initialized",
@@ -36,7 +38,9 @@ const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
 export default {
   id: "vibeknow",
   name: "VibeKnow Video Generator",
-  description: "AI-powered knowledge video generation via IM chat",
+  description:
+    "VibeKnow video generation plugin — provides create_video_from_url, generate_video, check_video_status, list_videos, get_video_url tools. " +
+    "When users mention 'vibeknow' or want to generate a video from a URL/document, use these tools directly.",
 
   register(api: OpenClawPluginApi) {
     const config = api.pluginConfig as

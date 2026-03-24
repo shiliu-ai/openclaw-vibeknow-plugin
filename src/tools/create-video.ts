@@ -20,9 +20,8 @@ export function createCreateVideoToolFactory(ctx: CreateVideoContext) {
       name: "create_video_from_url",
       label: "从链接生成视频",
       description:
-        "一键从网页链接生成知识短视频。" +
-        "传入 URL 后系统自动爬取内容、解析知识、生成视频。" +
-        "这是用户说「帮我用这个链接生成视频」时应该调用的工具。",
+        "【VibeKnow】一键从网页链接生成知识短视频。" +
+        "用户说「用vibeknow根据链接生成视频」「帮我把这个链接做成视频」时，直接调用此工具，只需传入 URL。",
       parameters: Type.Object({
         url: Type.String({
           description: "要生成视频的网页链接",
