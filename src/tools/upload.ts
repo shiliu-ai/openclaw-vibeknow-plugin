@@ -3,14 +3,14 @@ import type { FiglensClient } from "../api/client.js";
 import { textResult } from "../utils/tool-response.js";
 
 export function createUploadTool(client: FiglensClient) {
-  // eslint-disable-next-line no-console
-  console.error("[VibeKnow:direct] upload_knowledge tool created");
   return {
     name: "upload_knowledge",
     label: "上传知识库",
     description:
-      "【VibeKnow】上传文档或网页到知识库，返回 knowledge_id。" +
-      "仅在需要单独上传文档时使用。用户给 URL 想直接生成视频时请改用 create_video_from_url。",
+      "将文档或网页 URL 导入知识库并返回 knowledge_id。" +
+      "支持 PDF、Word、PPT、TXT 等文档格式，也支持网页 URL 自动爬取。" +
+      "knowledge_id 是调用 generate_video 生成视频的前置条件。" +
+      "如果用户只给了 URL 想生成视频，优先用 create_video_from_url 一步完成。",
     parameters: Type.Object({
       url: Type.Optional(
         Type.String({

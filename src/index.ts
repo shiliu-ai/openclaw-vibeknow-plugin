@@ -7,13 +7,11 @@ import { createPluginRuntimeStore } from "openclaw/plugin-sdk";
 
 import { FiglensClient } from "./api/client.js";
 import { createUploadTool } from "./tools/upload.js";
+import { createVideoFromUrlTool } from "./tools/create-video.js";
+import { createGenerateTool } from "./tools/generate.js";
+import { createStatusTool } from "./tools/status.js";
+import { createListTool } from "./tools/list.js";
 import { createUrlTool } from "./tools/url.js";
-import {
-  createVideoFromUrlDirect,
-  generateVideoFactory,
-  checkVideoStatusFactory,
-  listVideosFactory,
-} from "./tools/video-tools.js";
 import { createWebhookHandler } from "./webhook/handler.js";
 import type { WebhookPayload } from "./webhook/handler.js";
 import { formatDurationSec } from "./utils/format.js";
@@ -25,11 +23,13 @@ const VIBEKNOW_AGENT_GUIDANCE = `## VibeKnow Video Tools — ALREADY REGISTERED
 "vibeknow" / "VibeKnow" / "视频生成" in user messages means: use the tools below. Do NOT call sessions_spawn, do NOT try to run vibeknow as a command or runtime.
 
 ROUTING (act on the FIRST match, one tool call, no clarifying questions):
-1. User gives a URL + wants a video (mentions vibeknow/视频/video) → \`create_video_from_url(url)\`. Done.
-2. User uploaded a file/document + wants a video → \`upload_knowledge\` then \`generate_video\`.
-3. "进度" / "status" / "怎么样了" → \`check_video_status(task_id)\`.
-4. "我的视频" / "list" / "列表" → \`list_videos\`.
-5. "链接" / "share" for a finished video → \`get_video_url(work_id)\`.
+1. User gives a URL + wants a video → call \`create_video_from_url\` with that URL. Done.
+2. User gives a document/file + wants a video → call \`upload_knowledge\`, then \`generate_video\`.
+3. "进度" / "status" / "怎么样了" → call \`check_video_status\` with the task_id.
+4. "我的视频" / "list" / "列表" → call \`list_videos\`.
+5. "链接" / "share" for a finished video → call \`get_video_url\`.
+
+For im_handle and im_channel: extract from the current conversation sender metadata (sender id and channel name like "telegram", "discord", etc.).
 
 NEVER ask "do you want me to use vibeknow?" — if the user mentioned vibeknow or video generation, just call the tool.`;
 
@@ -40,13 +40,9 @@ const runtimeStore = createPluginRuntimeStore<PluginRuntime>(
 export default {
   id: "vibeknow",
   name: "VibeKnow Video Generator",
-  description:
-    "VibeKnow video generation plugin — provides create_video_from_url, generate_video, check_video_status, list_videos, get_video_url tools. " +
-    "When users mention 'vibeknow' or want to generate a video from a URL/document, use these tools directly.",
+  description: "AI-powered knowledge video generation via IM chat",
 
   register(api: OpenClawPluginApi) {
-    api.logger.info("[VibeKnow] register() called");
-
     const config = api.pluginConfig as
       | {
           figlensBaseUrl?: string;
@@ -79,28 +75,14 @@ export default {
 
     runtimeStore.setRuntime(api.runtime);
 
-    // ── 注册工具（逐个注册，对齐 feishu 插件模式） ──
+    // ── 注册工具（全部直接对象，不用 factory） ──
 
-    const toolCtx = { client, callbackUrl };
-
-    // 对照实验：直接工具 vs factory 工具
-    api.registerTool(createVideoFromUrlDirect(toolCtx));
-    api.registerTool(
-      generateVideoFactory(toolCtx),
-      { name: "generate_video" },
-    );
-    api.registerTool(
-      checkVideoStatusFactory(client),
-      { name: "check_video_status" },
-    );
-    api.registerTool(
-      listVideosFactory(client),
-      { name: "list_videos" },
-    );
+    api.registerTool(createVideoFromUrlTool({ client, callbackUrl }));
     api.registerTool(createUploadTool(client));
+    api.registerTool(createGenerateTool({ client, callbackUrl }));
+    api.registerTool(createStatusTool(client));
+    api.registerTool(createListTool(client));
     api.registerTool(createUrlTool(client));
-
-    api.logger.info("[VibeKnow] 6 tools registered");
 
     // ── 注入工具使用指引（prependSystemContext，缓存友好） ──
 
@@ -159,7 +141,7 @@ export default {
     });
 
     api.logger.info(
-      `[VibeKnow] Plugin fully registered. Figlens: ${config.figlensBaseUrl}, Callback: ${callbackUrl}`,
+      `[VibeKnow] Plugin registered (6 tools). Figlens: ${config.figlensBaseUrl}, Callback: ${callbackUrl}`,
     );
   },
 };

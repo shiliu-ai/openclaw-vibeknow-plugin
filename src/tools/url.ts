@@ -3,12 +3,10 @@ import type { FiglensClient } from "../api/client.js";
 import { textResult } from "../utils/tool-response.js";
 
 export function createUrlTool(client: FiglensClient) {
-  // eslint-disable-next-line no-console
-  console.error("[VibeKnow:direct] get_video_url tool created");
   return {
     name: "get_video_url",
     label: "获取视频链接",
-    description: "【VibeKnow】根据 work_id 获取视频作品的分享观看链接。",
+    description: "根据 work_id 获取视频作品的分享观看链接。",
     parameters: Type.Object({
       work_id: Type.Number({ description: "作品 ID" }),
     }),
