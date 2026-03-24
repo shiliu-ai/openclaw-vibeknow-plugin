@@ -45,6 +45,8 @@ const MAX_DISPLAY_COUNT = 10;
 
 export function createVideoFromUrlFactory(deps: VideoToolDeps) {
   return (ctx: PluginToolContext) => {
+    // eslint-disable-next-line no-console
+    console.error(`[VibeKnow:factory] create_video_from_url called, ctx keys: ${ctx ? Object.keys(ctx).join(",") : "NULL"}, channel=${ctx?.messageChannel}, sender=${ctx?.requesterSenderId}`);
     const im_handle = ctx?.requesterSenderId;
     const im_channel = ctx?.messageChannel;
 
@@ -94,6 +96,8 @@ export function createVideoFromUrlFactory(deps: VideoToolDeps) {
 
 export function generateVideoFactory(deps: VideoToolDeps) {
   return (ctx: PluginToolContext) => {
+    // eslint-disable-next-line no-console
+    console.error(`[VibeKnow:factory] generate_video called`);
     const im_handle = ctx?.requesterSenderId;
     const im_channel = ctx?.messageChannel;
 
@@ -143,6 +147,8 @@ export function generateVideoFactory(deps: VideoToolDeps) {
 
 export function checkVideoStatusFactory(client: FiglensClient) {
   return (ctx: PluginToolContext) => {
+    // eslint-disable-next-line no-console
+    console.error(`[VibeKnow:factory] check_video_status called`);
     const im_handle = ctx?.requesterSenderId;
     const im_channel = ctx?.messageChannel;
 
@@ -187,6 +193,8 @@ export function checkVideoStatusFactory(client: FiglensClient) {
 
 export function listVideosFactory(client: FiglensClient) {
   return (ctx: PluginToolContext) => {
+    // eslint-disable-next-line no-console
+    console.error(`[VibeKnow:factory] list_videos called`);
     const im_handle = ctx?.requesterSenderId;
     const im_channel = ctx?.messageChannel;
 

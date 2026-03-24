@@ -3,6 +3,8 @@ import type { FiglensClient } from "../api/client.js";
 import { textResult } from "../utils/tool-response.js";
 
 export function createUploadTool(client: FiglensClient) {
+  // eslint-disable-next-line no-console
+  console.error("[VibeKnow:direct] upload_knowledge tool created");
   return {
     name: "upload_knowledge",
     label: "上传知识库",
