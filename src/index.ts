@@ -9,7 +9,7 @@ import { FiglensClient } from "./api/client.js";
 import { createUploadTool } from "./tools/upload.js";
 import { createUrlTool } from "./tools/url.js";
 import {
-  createVideoFromUrlFactory,
+  createVideoFromUrlDirect,
   generateVideoFactory,
   checkVideoStatusFactory,
   listVideosFactory,
@@ -83,10 +83,8 @@ export default {
 
     const toolCtx = { client, callbackUrl };
 
-    api.registerTool(
-      createVideoFromUrlFactory(toolCtx),
-      { name: "create_video_from_url" },
-    );
+    // 对照实验：直接工具 vs factory 工具
+    api.registerTool(createVideoFromUrlDirect(toolCtx));
     api.registerTool(
       generateVideoFactory(toolCtx),
       { name: "generate_video" },

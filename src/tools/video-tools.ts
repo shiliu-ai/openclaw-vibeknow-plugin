@@ -41,7 +41,42 @@ const STATUS_LABELS: Record<number, string> = {
 
 const MAX_DISPLAY_COUNT = 10;
 
-// ── create_video_from_url ──
+// ── create_video_from_url (直接工具版，不用 factory，用于对照实验) ──
+
+export function createVideoFromUrlDirect(deps: VideoToolDeps) {
+  // eslint-disable-next-line no-console
+  console.error("[VibeKnow:direct] create_video_from_url tool created (non-factory)");
+  return {
+    name: "create_video_from_url",
+    label: "从链接生成视频",
+    description:
+      "【VibeKnow】一键从网页链接生成知识短视频。" +
+      "用户说「用vibeknow根据链接生成视频」「帮我把这个链接做成视频」时，直接调用此工具，只需传入 URL。",
+    parameters: Type.Object({
+      url: Type.String({ description: "要生成视频的网页链接" }),
+      query: Type.Optional(
+        Type.String({
+          description: "视频主题或风格要求。用户没特别说明时不传，系统自动生成。",
+        }),
+      ),
+      voice_id: Type.Optional(
+        Type.String({ description: "指定语音 ID，不传则使用默认语音" }),
+      ),
+    }),
+    async execute(
+      _toolCallId: string,
+      params: { url: string; query?: string; voice_id?: string },
+    ) {
+      // 对照实验：直接工具没有 im identity，先返回固定消息看工具能否被找到
+      return textResult(
+        "✅ create_video_from_url 工具被成功调用了！（对照实验：暂未执行实际逻辑）\n" +
+          `收到的 URL: ${params.url}`,
+      );
+    },
+  };
+}
+
+// ── create_video_from_url (factory 版，保留对照) ──
 
 export function createVideoFromUrlFactory(deps: VideoToolDeps) {
   return (ctx: PluginToolContext) => {
